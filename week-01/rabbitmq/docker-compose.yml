@@ -1,46 +1,34 @@
 services:
   rabbitmq:
     image: rabbitmq:4.2.2-management-alpine
-    container_name: rabbitmq
+    container_name: rabbitmq-python
     environment:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
     ports:
       - "5672:5672"
       - "15672:15672"
- 
+
   producer:
     build: ./producer
-    container_name: producer
+    container_name: producer-python
     ports:
       - "3000:3000"
     volumes:
       - ./producer:/app
-      - /app/node_modules
-    develop:
-      watch:
-        - action: sync
-          path: ./producer
-          target: /app
-          ignore:
-            - node_modules/
-    command: npm run dev
+    environment:
+      PYTHONUNBUFFERED: 1
+    command: python producer_dlq.py
     depends_on:
       - rabbitmq
 
   consumer:
     build: ./consumer
-    container_name: consumer
+    container_name: consumer-python
     volumes:
       - ./consumer:/app
-      - /app/node_modules
-    develop:
-      watch:
-        - action: sync
-          path: ./consumer
-          target: /app
-          ignore:
-            - node_modules/
-    command: npm run dev
+    environment:
+      PYTHONUNBUFFERED: 1
+    command: python consumer_dlq.py
     depends_on:
       - rabbitmq
