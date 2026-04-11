@@ -1,0 +1,21 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: ex03_mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ex03_phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      # Cấu hình để PHPMyAdmin biết phải kết nối tới service nào
+      PMA_HOST: db
+    depends_on:
+      # Chờ MySQL khởi động xong thì mới bật PHPMyAdmin
+      - db

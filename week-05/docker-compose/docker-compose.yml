@@ -1,0 +1,22 @@
+services:
+  web:
+    build: .
+    container_name: demo_web_server
+    ports:
+      - "${WEB_PORT}:80"
+    restart: unless-stopped
+    networks:
+      - demo_network
+
+  cache:
+    image: redis:alpine
+    container_name: demo_redis_cache
+    ports:
+      - "${REDIS_PORT}:6379"
+    restart: unless-stopped
+    networks:
+      - demo_network
+
+networks:
+  demo_network:
+    driver: bridge

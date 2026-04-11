@@ -1,0 +1,6 @@
+services:
+  nginx-web:
+    image: nginx:latest
+    container_name: ex01_nginx_web
+    ports:
+      - "8080:80"

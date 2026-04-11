@@ -1,0 +1,7 @@
+services:
+  express-app:
+    build: .
+    container_name: ex04_nodejs_app
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
