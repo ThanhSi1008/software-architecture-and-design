@@ -1,0 +1,25 @@
+{
+  "name": "movie-ticket-system",
+  "version": "1.0.0",
+  "description": "Chào mừng bạn đến với dự án Movie Ticket System! Đây là tài liệu hướng dẫn và thống nhất kỹ thuật dành cho tất cả lập trình viên tham gia dự án. **VUI LÒNG ĐỌC KỸ TÀI LIỆU NÀY TRƯỚC KHI BẮT ĐẦU CODE.**",
+  "main": "index.js",
+  "scripts": {
+    "dev:user": "cd user-service && npm run dev",
+    "dev:movie": "cd movie-service && npm run dev",
+    "dev:booking": "cd booking-service && npm run dev",
+    "dev:payment": "cd payment-notification && npm run dev",
+    "dev:gateway": "cd api-gateway && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev -- --port 8085",
+    "dev": "concurrently \"npm:dev:user\" \"npm:dev:movie\" \"npm:dev:booking\" \"npm:dev:payment\" \"npm:dev:gateway\" \"npm:dev:frontend\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "amqplib": "^1.0.3",
+    "mongoose": "^9.5.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

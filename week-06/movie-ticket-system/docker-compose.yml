@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # === DATABASE ===
+  mongodb:
+    image: mongo:7
+    container_name: movie-ticket-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - movie-ticket-network
+
+  # === MESSAGE BROKER ===
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: movie-ticket-rabbitmq
+    ports:
+      - "5673:5672"     # AMQP protocol
+      - "15673:15672"   # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - movie-ticket-network
+
+volumes:
+  mongodb_data:
+  rabbitmq_data:
+
+networks:
+  movie-ticket-network:
+    driver: bridge
