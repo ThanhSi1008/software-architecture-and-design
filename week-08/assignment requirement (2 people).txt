@@ -1,0 +1,180 @@
+Buổi 7 — SPACE-BASED ARCHITECTURE (Phân công 2 người – 2 máy tính)
+Bài toán: Hệ thống Flash Sale (Bán hàng sốc – chịu tải cao)
+Một hệ thống bán hàng flash sale (giống Shopee/Lazada) cần:
+• Chịu tải cao (1000+ request/s)
+• Tránh nghẽn database
+• Xử lý nhanh (low latency)
+
+❖ Yêu cầu 5 chức năng chính:
+• Xem danh sách sản phẩm
+• Xem chi tiết sản phẩm
+• Thêm vào giỏ hàng
+• Đặt hàng (checkout)
+• Giảm tồn kho (real-time)
+
+❖ Yêu cầu kiến trúc:
+Áp dụng Space-Based Architecture:
+
+❖ Nguyên lý:
+• Hạn chế DB (tránh bottleneck)
+• Dữ liệu nằm trong Memory Grid (Data Grid)
+• Xử lý tại Processing Unit (PU)
+
+❖ Thành phần chính
+• Processing Unit (PU) = Service xử lý + cache local
+• Data Grid = Redis / Hazelcast (chia sẻ dữ liệu RAM)
+• Messaging (optional)
+
+============================================================
+Phân công 2 người – 2 máy tính (kết nối LAN)
+============================================================
+
+Ví dụ IP:
+• Máy A (Người 1): 192.168.1.10
+• Máy B (Người 2): 192.168.1.20
+(Thay bằng IP thực tế của mỗi máy – dùng lệnh ipconfig để kiểm tra)
+
+------------------------------------------------------------
+❖ Người 1 – MÁY A: Frontend + Cart PU + Order PU
+------------------------------------------------------------
+
+Phần 1: Frontend (ReactJS) — chạy trên port 3000
+UI:
+• Danh sách sản phẩm (gọi API từ PU1 ở MÁY B)
+• Giỏ hàng (gọi API từ PU2 ở MÁY A – cùng máy)
+• Đặt hàng / Checkout (gọi API từ PU3 ở MÁY A – cùng máy)
+• Hiển thị tồn kho real-time (gọi API từ PU4 ở MÁY B)
+
+Cấu hình API base URL trong Frontend:
+  PU1 (Product):   http://192.168.1.20:8081
+  PU2 (Cart):      http://192.168.1.10:8082   (cùng máy)
+  PU3 (Order):     http://192.168.1.10:8083   (cùng máy)
+  PU4 (Inventory): http://192.168.1.20:8084
+
+Phần 2: Cart Processing Unit (PU2) — chạy trên port 8082
+API:
+• POST /cart/add
+• GET /cart
+Data:
+• Lưu trong Data Grid (Redis ở MÁY B)
+• Kết nối Redis: redis://192.168.1.20:6379
+
+Phần 3: Order Processing Unit (PU3) — chạy trên port 8083
+API:
+• POST /checkout
+Xử lý:
+• Lấy cart từ Data Grid (Redis ở MÁY B)
+• Tạo order, lưu vào Data Grid
+• Gọi Inventory PU4 (http://192.168.1.20:8084) hoặc trực tiếp Redis để giảm stock
+• Kết nối Redis: redis://192.168.1.20:6379
+
+------------------------------------------------------------
+❖ Người 2 – MÁY B: Redis + Product PU + Inventory PU
+------------------------------------------------------------
+
+Phần 1: Redis (Data Grid) — chạy trên port 6379
+• Cài đặt và cấu hình Redis server
+• Bind 0.0.0.0 (cho phép máy khác kết nối qua LAN)
+• Seed dữ liệu sản phẩm ban đầu vào Redis
+• Seed dữ liệu tồn kho ban đầu vào Redis
+• Tắt protected-mode hoặc set password
+
+Phần 2: Product Processing Unit (PU1) — chạy trên port 8081
+API:
+• GET /products         → Trả danh sách sản phẩm
+• GET /products/{id}    → Trả chi tiết sản phẩm
+Data:
+• Load từ Data Grid (Redis – cùng máy)
+• Kết nối Redis: redis://localhost:6379
+Không đọc DB trực tiếp
+
+Phần 3: Inventory Processing Unit (PU4) — chạy trên port 8084
+API:
+• GET /stock/{productId}  → Trả tồn kho hiện tại
+Xử lý:
+• Khi checkout:
+  - Giảm tồn kho trực tiếp trên Data Grid (Redis DECRBY)
+  - Kiểm tra stock >= 0 trước khi cho phép mua
+• Kết nối Redis: redis://localhost:6379
+Không gọi DB
+
+============================================================
+Mô hình triển khai trên LAN (2 máy):
+============================================================
+
+MÁY A – Người 1 (192.168.1.10):
+┌─────────────────────────────────────┐
+│  Frontend (ReactJS)      :3000      │
+│  PU2 – Cart              :8082      │
+│  PU3 – Order             :8083      │
+└─────────────────────────────────────┘
+            │
+            │  LAN (192.168.1.x)
+            │
+MÁY B – Người 2 (192.168.1.20):
+┌─────────────────────────────────────┐
+│  Redis (Data Grid)       :6379      │
+│  PU1 – Product           :8081      │
+│  PU4 – Inventory         :8084      │
+└─────────────────────────────────────┘
+
+Tổng hợp bảng IP:
+Service                  IP                      Máy
+Redis (Data Grid)        192.168.1.20:6379       Máy B
+PU1 – Product            192.168.1.20:8081       Máy B
+PU2 – Cart               192.168.1.10:8082       Máy A
+PU3 – Order              192.168.1.10:8083       Máy A
+PU4 – Inventory          192.168.1.20:8084       Máy B
+Frontend                 192.168.1.10:3000       Máy A
+
+============================================================
+Luồng xử lý chính (cross-machine)
+============================================================
+
+❖ Luồng đặt hàng
+1. User mở Frontend (Máy A :3000)
+2. Frontend gọi GET /products → PU1 (Máy B :8081) → Redis (Máy B)
+3. User chọn sản phẩm → add to cart
+   Frontend gọi POST /cart/add → PU2 (Máy A :8082) → Redis (Máy B)
+4. User checkout
+   Frontend gọi POST /checkout → PU3 (Máy A :8083)
+5. PU3 (Máy A):
+   o Lấy cart từ Redis (Máy B :6379)
+   o Gọi PU4 (Máy B :8084) hoặc trực tiếp Redis → Giảm stock
+6. Trả kết quả ngay (KHÔNG chờ DB)
+
+============================================================
+Kịch bản Test (BẮT BUỘC DEMO)
+============================================================
+1. Load danh sách sản phẩm từ Redis (cross-machine)
+2. Add to cart
+3. Checkout
+4. Stock giảm ngay lập tức
+5. Không bị chậm khi nhiều request
+
+============================================================
+Checklist trước khi demo
+============================================================
+□ Hai máy cùng mạng LAN (ping được nhau)
+□ Redis trên Máy B bind 0.0.0.0, tắt protected-mode
+□ Tất cả PU đều enable CORS
+□ Frontend cấu hình đúng IP của từng PU
+□ Seed data sản phẩm + tồn kho vào Redis
+
+============================================================
+Bonus (nếu làm nhanh)
+============================================================
+1. Dùng Hazelcast thay Redis
+2. Implement locking (SETNX)
+3. Thêm Queue xử lý async
+4. Simulate load test (Postman Runner)
+
+============================================================
+Tiêu chí chấm điểm
+============================================================
+Tiêu chí                    Điểm
+Đúng Space-Based            3
+Không phụ thuộc DB           2.5
+Dùng Data Grid đúng          2
+Flow nhanh, không nghẽn      1.5
+Demo scale (clone PU)        1
