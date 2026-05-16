@@ -1,0 +1,89 @@
+/* ─── Flow Tracker ───────────────────────────────────────────────────────────── */
+.active-flows {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.af-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 1rem; }
+.af-item { margin-bottom: 1.25rem; }
+.af-item:last-child { margin-bottom: 0; }
+.af-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 8px; flex-wrap: wrap;
+}
+.af-order-id { font-weight: 700; font-size: 0.85rem; color: var(--primary); }
+.af-status { font-size: 0.78rem; font-weight: 600; padding: 2px 8px; border-radius: 50px; }
+.af-processing { background: rgba(59,130,246,0.15); color: #60A5FA; }
+.af-done      { background: rgba(34,197,94,0.15);  color: #4ADE80; }
+.af-failed    { background: rgba(239,68,68,0.15);  color: #F87171; }
+.af-time { font-size: 0.72rem; color: var(--text-dim); margin-left: auto; font-family: monospace; }
+.af-msg { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; padding: 6px 10px; background: rgba(255,255,255,0.04); border-radius: 6px; }
+
+/* Flow Steps Row */
+.flow-tracker {
+  display: flex; gap: 4px;
+  border-radius: 10px; overflow: hidden;
+}
+.fstep {
+  flex: 1; padding: 8px 6px; text-align: center;
+  background: rgba(255,255,255,0.04); color: var(--text-dim);
+  font-size: 0.72rem; transition: all 0.4s ease;
+  position: relative; overflow: hidden;
+  border-radius: 6px;
+}
+.fstep-label { font-weight: 700; margin-bottom: 2px; }
+.fstep-sub   { font-size: 0.65rem; opacity: 0.7; margin-bottom: 3px; }
+.fstep-tag   { font-size: 0.6rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; display: inline-block; }
+.ftag-rest    { background: rgba(59,130,246,0.2);  color: #60A5FA; }
+.ftag-event   { background: rgba(255,87,34,0.2);   color: var(--primary-light); }
+
+.fstep-active {
+  background: rgba(255,87,34,0.2); color: var(--primary-light);
+  border: 1px solid rgba(255,87,34,0.4);
+}
+.fstep-done {
+  background: rgba(34,197,94,0.12); color: #4ADE80;
+  border: 1px solid rgba(34,197,94,0.25);
+}
+.fstep-failed {
+  background: rgba(239,68,68,0.12); color: #F87171;
+  border: 1px solid rgba(239,68,68,0.25);
+}
+
+/* Pulse animation for active step */
+.fstep-pulse {
+  position: absolute; inset: 0;
+  background: rgba(255,87,34,0.12);
+  animation: pulse-bg 1.5s ease-in-out infinite;
+}
+@keyframes pulse-bg {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 1;   }
+}
+
+/* ─── Cache Badge ─────────────────────────────────────────────────────────── */
+.cache-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 50px; font-size: 0.7rem; font-weight: 700;
+}
+.cache-hit  { background: rgba(34,197,94,0.15);  color: #4ADE80; border: 1px solid rgba(34,197,94,0.3); }
+.cache-miss { background: rgba(245,158,11,0.15); color: #FCD34D; border: 1px solid rgba(245,158,11,0.3); }
+.cache-off  { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+
+/* ─── Redis Info Box ─────────────────────────────────────────────────────── */
+.redis-info {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+  border-radius: 8px; padding: 8px 14px; margin-bottom: 1.25rem;
+  font-size: 0.8rem;
+}
+.redis-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: #4ADE80; box-shadow: 0 0 6px #4ADE80;
+  animation: redis-blink 2s ease-in-out infinite;
+}
+@keyframes redis-blink { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.redis-label { color: #4ADE80; font-weight: 600; }
+.redis-desc  { color: var(--text-muted); }
